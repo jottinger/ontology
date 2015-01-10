@@ -57,6 +57,8 @@ class Ontology(NS: String) {
         val parent = getOntClass(data(node.p).name)
         m.applyChanges(List(
           new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+        new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+          new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
           new AddAxiom(o, df.getOWLSubClassOfAxiom(clazz, parent))
         ))
       } else {
@@ -71,6 +73,9 @@ class Ontology(NS: String) {
           val hasClazzSomeClazz = df.getOWLObjectSomeValuesFrom(hasClazz, clazz)
           // note: we do NOTHING with typed fields
           m.applyChanges(List(
+            new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+            new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
+            new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
             new AddAxiom(o, df.getOWLSubClassOfAxiom(parent, hasClazzSomeClazz))
           ))
         }
