@@ -1,4 +1,4 @@
-name := "jena"
+name := "ontology"
 
 version := "1.0"
 

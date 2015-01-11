@@ -96,12 +96,14 @@ class Ontology(NS: String) {
               val clazz = getOntClass(node.name)
               // hasClazz is the data property
               val hasClazz = getOntDataProperty("has" + node.name)
+              val hasClazzSomeClazz = df.getOWLDataSomeValuesFrom(hasClazz, odt)
               m.applyChanges(List(
                 new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
                 new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
                 new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
                 new AddAxiom(o, df.getOWLDataPropertyDomainAxiom(hasClazz, parent)),
-                new AddAxiom(o, df.getOWLDataPropertyRangeAxiom(hasClazz, odt))
+                new AddAxiom(o, df.getOWLDataPropertyRangeAxiom(hasClazz, odt)),
+                new AddAxiom(o, df.getOWLSubClassOfAxiom(parent, hasClazzSomeClazz))
               ))
           }
         }
