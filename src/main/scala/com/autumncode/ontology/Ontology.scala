@@ -6,6 +6,7 @@ import org.semanticweb.owlapi.apibinding.OWLManager
 import org.semanticweb.owlapi.io.StringDocumentTarget
 import org.semanticweb.owlapi.model.{AddAxiom, IRI}
 import org.semanticweb.owlapi.util.AutoIRIMapper
+import org.semanticweb.owlapi.vocab.OWL2Datatype
 
 import scala.collection.JavaConversions._
 
@@ -49,6 +50,7 @@ class Ontology(NS: String) {
   def modelData(data: Map[Int, Node]): Unit = {
     data.foreach(d => {
       val (id, node) = d
+      println(s"processing $id -> $node")
       // create the node reference
       if (node.p != 0) {
         // this is an is-A relationship
@@ -57,27 +59,51 @@ class Ontology(NS: String) {
         val parent = getOntClass(data(node.p).name)
         m.applyChanges(List(
           new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
-        new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+          new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
           new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
           new AddAxiom(o, df.getOWLSubClassOfAxiom(clazz, parent))
         ))
       } else {
         if (node.r != 0) {
-          // this is a has-A relationship
-          val parent = getOntClass(data(node.r).name)
-          // think head has a nose = parent is head
-          // clazz is nose
-          val clazz = getOntClass(node.name)
-          // hasClazz is the data property
-          val hasClazz = getOntObjectProperty("has" + node.name)
-          val hasClazzSomeClazz = df.getOWLObjectSomeValuesFrom(hasClazz, clazz)
-          // note: we do NOTHING with typed fields
-          m.applyChanges(List(
-            new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
-            new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
-            new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
-            new AddAxiom(o, df.getOWLSubClassOfAxiom(parent, hasClazzSomeClazz))
-          ))
+          node.dataType match {
+            case None =>
+              // this is a has-A relationship
+              val parent = getOntClass(data(node.r).name)
+              // think head has a nose = parent is head
+              // clazz is nose
+              val clazz = getOntClass(node.name)
+              // hasClazz is the data property
+              val hasClazz = getOntObjectProperty("has" + node.name)
+              val hasClazzSomeClazz = df.getOWLObjectSomeValuesFrom(hasClazz, clazz)
+
+              m.applyChanges(List(
+                new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+                new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
+                new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
+                new AddAxiom(o, df.getOWLSubClassOfAxiom(parent, hasClazzSomeClazz))
+              ))
+
+            // now address type?
+            case t: Some[String] =>
+              val odt = t.get match {
+                case "string" => OWL2Datatype.XSD_STRING.getDatatype(df)
+                case "dateTime" => OWL2Datatype.XSD_DATE_TIME.getDatatype(df)
+                case _ => OWL2Datatype.XSD_ANY_URI.getDatatype(df)
+              }
+              val parent = getOntClass(data(node.r).name)
+              // head has a nose = parent is head
+              // clazz is nose
+              val clazz = getOntClass(node.name)
+              // hasClazz is the data property
+              val hasClazz = getOntDataProperty("has" + node.name)
+              m.applyChanges(List(
+                new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+                new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
+                new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
+                new AddAxiom(o, df.getOWLDataPropertyDomainAxiom(hasClazz, parent)),
+                new AddAxiom(o, df.getOWLDataPropertyRangeAxiom(hasClazz, odt))
+              ))
+          }
         }
       }
     }
