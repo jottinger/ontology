@@ -57,11 +57,21 @@ class Ontology(NS: String) {
         val clazz = getOntClass(node.name)
 
         val parent = getOntClass(data(node.p).name)
+        val hasClazz = getOntObjectProperty("has" + node.name)
+        val hasClazzSomeClazz = df.getOWLObjectSomeValuesFrom(hasClazz, clazz)
+
+        val hasParent = getOntObjectProperty("has" + data(node.p).name)
+        val hasParentSomeParent = df.getOWLObjectSomeValuesFrom(hasParent, parent)
         m.applyChanges(List(
           new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
           new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
           new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
-          new AddAxiom(o, df.getOWLSubClassOfAxiom(clazz, parent))
+          new AddAxiom(o, df.getOWLSubClassOfAxiom(clazz, parent)),
+          new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
+          new AddAxiom(o, df.getOWLSubClassOfAxiom(parent, hasClazzSomeClazz)),
+          new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
+          new AddAxiom(o, df.getOWLDeclarationAxiom(hasParent)),
+          new AddAxiom(o, df.getOWLSubObjectPropertyOfAxiom(hasClazz, hasParent))
         ))
       } else {
         if (node.r != 0) {
@@ -93,12 +103,13 @@ class Ontology(NS: String) {
               val parent = getOntClass(data(node.r).name)
               // head has a nose = parent is head
               // clazz is nose
-              val clazz = getOntClass(node.name)
+              val clazz = getOntDataProperty(node.name)
               // hasClazz is the data property
               val hasClazz = getOntDataProperty("has" + node.name)
               val hasClazzSomeClazz = df.getOWLDataSomeValuesFrom(hasClazz, odt)
               m.applyChanges(List(
                 new AddAxiom(o, df.getOWLDeclarationAxiom(clazz)),
+                new AddAxiom(o, df.getOWLSubDataPropertyOfAxiom(clazz, topProperty)),
                 new AddAxiom(o, df.getOWLDeclarationAxiom(parent)),
                 new AddAxiom(o, df.getOWLDeclarationAxiom(hasClazz)),
                 new AddAxiom(o, df.getOWLDataPropertyDomainAxiom(hasClazz, parent)),
