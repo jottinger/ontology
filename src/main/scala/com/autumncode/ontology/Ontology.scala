@@ -97,6 +97,9 @@ class Ontology(NS: String) {
             case t: Some[String] =>
               val odt = t.get match {
                 case "string" => OWL2Datatype.XSD_STRING.getDatatype(df)
+                case "integer" => OWL2Datatype.XSD_INT.getDatatype(df)
+                case "boolean" => OWL2Datatype.XSD_BOOLEAN.getDatatype(df)
+                case "float" => OWL2Datatype.XSD_FLOAT.getDatatype(df)
                 case "dateTime" => OWL2Datatype.XSD_DATE_TIME.getDatatype(df)
                 case _ => OWL2Datatype.XSD_ANY_URI.getDatatype(df)
               }
